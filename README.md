@@ -5,6 +5,7 @@ Single page WEB-application for insects form analyzing scientific research
 Algorithms which has been implemented here is:
 
 * Grayscale filter
+* Gaussian blur filter
 * Dilatation matrix filter
 * Sobel operator filter
 * Semirecursive flood
