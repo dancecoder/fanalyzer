@@ -15,3 +15,5 @@ Special functions is:
 * Simmetry finding through covariance of axis length which descripts the figure
 
 All of that is in pure JavaScript with no dependencies.
+
+[Use it live!](https://dancecoder.github.io/fanalyzer/public_html/index.html) - go to the application page
