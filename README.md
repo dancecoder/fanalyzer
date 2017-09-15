@@ -1,6 +1,6 @@
 # Form Analyzer
 
-SPA WEB-application for insects form analyzing scientific research
+Single page WEB-application for insects form analyzing scientific research
 
 Algorithms which has been implemented here is:
 
