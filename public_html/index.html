@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Form Analyzer</title>
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=" />
+    <link rel="stylesheet" type="text/css" href="style.css" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script type="text/javascript" src="js/Polyfill.js"></script>
+    <script type="text/javascript" src="js/application.js"></script>
+    <script type="text/javascript">
+      var app = new Application();
+      app.run();
+    </script>
+  </head>
+  <body>
+
+    <menu>
+      <div>
+        <div class="logo">
+          <span>FA</span>
+          <span class="name">Form Analyzer Web</span>
+        </div>
+      </div>
+      <!--
+      <button data-action="showGauss">Gauss</button>
+      <button data-action="showGray">Grayscale</button>
+      <button data-action="showSobel">Sobel</button>
+      <button data-action="showKanny">Kanny</button>
+      -->
+      <div class="flexContainer">
+          <button data-action="selectImageFile">Open Image</button>
+          <button data-action="analyze">Analyze</button>
+          <div class="dataContainer">
+            <div class="areaLabel">Data (copy and paste to a spreadsheet)</div>
+            <textarea id="addDataOut"></textarea>
+          </div>
+          <div class="areaLabel">Options</div>
+          <label><input type="checkbox" data-action="fitToggle" checked="checked" id="appFitImage" /><span>Fit image to window</span></label>
+          <div class="areaLabel">Current image histogram</div>
+          <div id="appHistogram" class="barChart"></div>
+      </div>
+    </menu>
+
+    <div class="appHidden">
+      <input id="appFileInput" data-action="loadImage" type="file" accept="image/*" />
+      <canvas id="appCanvas"></canvas>
+    </div>
+    <img id="appImage" src="" alt="" />
+    <div id="appGraphDataLayer"></div>
+
+  </body>
+</html>
