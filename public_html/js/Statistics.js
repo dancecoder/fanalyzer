@@ -11,7 +11,7 @@ Statistics.covariance = function(vectorA, vectorB) {
   var sumB = 0;
   for (var i = 0; i < count; i++) {
     sumA += vectorA[i];
-    sumB += vectorA[i];
+    sumB += vectorB[i];
   }  
   var expectedA = sumA / vectorA.length;
   var expectedB = sumB / vectorB.length;
