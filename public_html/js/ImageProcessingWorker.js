@@ -29,14 +29,16 @@ ImageProcessing.prototype.handleEvent = function(event) {
 };
 
 ImageProcessing.prototype.noop = function(event) {
-  console.log('Hi! I\'m alive');
+  console.log('ImageProcessing.prototype.noop');
 };
 
 ImageProcessing.prototype.setImageData = function(event) {
   this.imageData = event.data.imageData;
   this.imageData.pixelSize = 4;
-  this.grayData = null;
-  this.grayData = this.getGrayData();
+  var grayOperator = new GrayScaleOperator(this.imageData);
+  this.iterate(this.imageData.width, this.imageData.height, 4, grayOperator);
+  this.grayData = grayOperator.getResultData();
+  this.normalize(this.grayData);
   var hg = this.histogram(this.grayData, 255);
   self.postMessage({ 'action': 'updateHistogram', 'histogram': hg });
 };
@@ -44,8 +46,11 @@ ImageProcessing.prototype.setImageData = function(event) {
 ImageProcessing.prototype.applyGrayscale = function(event) {
   if (this.imageData) {
     var outImageData = event.data.imageData;
-    var grayData = this.getGrayData();
-    this.apply(grayData, outImageData.data);
+    var grayOperator = new GrayScaleOperator(this.imageData);
+    this.iterate(this.imageData.width, this.imageData.height, 4, grayOperator);
+    var grayData = grayOperator.getResultData();
+    this.normalize(grayData);
+    this.copyImageData(grayData, outImageData);
     self.postMessage({ 'action': 'updateImage', 'imageData': outImageData });
   } else {
     console.log('Please set image data first');
@@ -71,8 +76,6 @@ ImageProcessing.prototype.applySobel = function(event) {
     var data = this.iterateXY(this.grayData.width, this.grayData.height, this.grayData.pixelSize, operator);
     this.apply(data, outImageData.data);
     self.postMessage({ 'action': 'updateImage', 'imageData': outImageData });
-    var hg = this.histogram(data, 255);
-    self.postMessage({ 'action': 'updateHistogram', 'histogram': hg });
   } else {
     console.log('Please set image data first');
   }
@@ -89,8 +92,6 @@ ImageProcessing.prototype.applyKanny = function(event) {
     data = this.iterateXY(this.grayData.width, this.grayData.height, this.grayData.pixelSize, suppress);
     this.apply(data, outImageData.data);
     self.postMessage({ 'action': 'updateImage', 'imageData': outImageData });
-    var hg = this.histogram(data, 255);
-    self.postMessage({ 'action': 'updateHistogram', 'histogram': hg });
   } else {
     console.log('Please set image data first');
   }
@@ -145,36 +146,6 @@ ImageProcessing.prototype.copyImageData = function(from, to) {
     }
     to.data[offset+3] = 255; // Alpha
   }
-};
-
-ImageProcessing.prototype.getGrayData = function() {
-  if (!this.grayData) {
-    var data = this.imageData.data;
-    var gray = {
-      pixelSize: 1,
-      width: this.imageData.width,
-      height: this.imageData.height,
-      data: new Uint16Array(this.imageData.width * this.imageData.height),
-      stat: [{
-        max: 0,
-        min: Number.MAX_VALUE        
-      }]
-    };
-    var bg = [255, 255, 255];
-    var dataCounter = 0;
-    for (var i = 0; i < data.length; i += this.imageData.pixelSize) {
-      var value = 0;
-      var alpha = data[i+3] / 255;
-      for (var subpixel = 0; subpixel < 3; subpixel++) {
-        value += bg[subpixel] * (1-alpha) + data[i + subpixel] * alpha;
-      }
-      gray.data[dataCounter++] = value;
-      gray.stat[0].max = Math.max(gray.stat[0].max, value);
-      gray.stat[0].min = Math.min(gray.stat[0].min, value);
-    }
-    this.grayData = gray;
-  }
-  return this.grayData;
 };
 
 ImageProcessing.prototype.histogram = function(data, scale) {  
@@ -291,9 +262,6 @@ if (this.imageData) {
     pixelData = this.iterateRecursive(pixelData, fillOperator);
     this.copyImageData(data, outImageData);
     self.postMessage({ 'action': 'updateImage', 'imageData': outImageData });
-    
-    var hg = this.histogram(data, 255);
-    self.postMessage({ 'action': 'updateHistogram', 'histogram': hg });
 
     var centerOperator = new FindCenterOperator(data, backgroundColor);
     this.iterate(data.width, data.height, data.pixelSize, centerOperator);
@@ -338,6 +306,43 @@ if (this.imageData) {
   }
 };
 
+
+function GrayScaleOperator(imageData) {
+  this.data = imageData;
+  this.pixel = new ImageDataPixel(imageData);
+  this.gray = new Uint16Array(imageData.width * imageData.height);
+  this.bg = [255, 255, 255];
+  this.dataCounter = 0;
+  this.max = 0;
+  this.min = Number.MAX_VALUE;
+}
+
+GrayScaleOperator.prototype.apply = function(x, y, subpixel) {
+  if (subpixel === 0) {
+    this.pixel.move(x, y);
+    var a = this.pixel.get(3) / 255;
+    var value = 
+        this.bg[0] * (1-a) + this.pixel.get(0) * a + // r
+        this.bg[1] * (1-a) + this.pixel.get(1) * a + // g
+        this.bg[2] * (1-a) + this.pixel.get(2) * a ; // b
+    this.gray[this.dataCounter++] = value;
+    this.max = Math.max(this.max, value);
+    this.min = Math.min(this.min, value);
+  }
+};
+
+GrayScaleOperator.prototype.getResultData = function() {
+  return {
+    pixelSize: 1,
+    width: this.data.width,
+    height: this.data.height,
+    data: this.gray,
+    stat: [{
+      max: this.max,
+      min: this.min
+    }]
+  };
+};
 
 function FindAxisLengthOperator(imageData, backgroundColor) {
   this.pixel = new ImageDataPixel(imageData);
