@@ -279,6 +279,8 @@ if (this.imageData) {
       };
       axisOperator.reset();
     }
+    self.postMessage({ 'action': 'updateAxis', 'axis': axis });
+
     for(var azimuth = 0; azimuth < 180; azimuth++) {
       var currentAxis = axis[azimuth];
       var left = [];
@@ -299,8 +301,7 @@ if (this.imageData) {
         symmetryAxis = azimuth;
       }
     }
-
-    self.postMessage({ 'action': 'updateAxis', 'axis': axis, 'symmetryAxis': symmetryAxis });
+    self.postMessage({ 'action': 'updateSymmetryAxis', 'symmetryAxis': symmetryAxis });
   } else {
     console.log('Please set image data first');
   }

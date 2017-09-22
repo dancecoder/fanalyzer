@@ -7,6 +7,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script type="text/javascript" src="js/Polyfill.js"></script>
+    <script type="text/javascript" src="js/AnalyticalData.js"></script>
     <script type="text/javascript" src="js/application.js"></script>
     <script type="text/javascript">
       var app = new Application();
@@ -29,8 +30,9 @@
       <button data-action="showKanny">Kanny</button>
       -->
       <div class="flexContainer">
-          <button data-action="selectImageFile">Open Image</button>
-          <button data-action="analyze">Analyze</button>
+          <button class="tool" data-action="selectImageFile">Open Image</button>
+          <button class="tool" data-action="analyze">Analyze</button>
+          <label class="tool"><span>Rotate</span><input id="appAngle" data-action="rotate" type="number" max="180" min="-180" step="1" value="0" /></label>
           <div class="dataContainer">
             <div class="areaLabel">Data (copy and paste to a spreadsheet)</div>
             <textarea id="addDataOut"></textarea>

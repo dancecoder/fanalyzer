@@ -74,9 +74,22 @@ menu .barChart .bar {
   background-color: #354c20;
 }
 
-menu button {
+menu .tool {
   margin-top: 1em;
   padding: .3em;
+}
+
+menu label.tool {
+  display: flex;
+  padding: 0;
+}
+
+menu label.tool span {
+  padding: 0 .2em 0 0;
+}
+
+menu label.tool input {
+  flex: 1 0 auto;
 }
 
 menu label {

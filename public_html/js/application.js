@@ -3,7 +3,9 @@
 function Application() {
   this.context = null;  
   this.processing = null;
+  this.currentAnalyticalData = null;
   this.windowResizeTimeout = null;
+  this.outdataSelectTimeout = null;
 }
 
 Application.prototype.run = function() {
@@ -15,6 +17,7 @@ Application.prototype.run = function() {
     window.addEventListener('click', this);
     window.addEventListener('resize', this);
     window.addEventListener('change', this); // file input
+    window.addEventListener('input', this);
   }.bind(this));  
 };
 
@@ -42,7 +45,7 @@ Application.prototype.handleEvent = function(event) {
 
 Application.prototype.onWindowResize = function(event) {
   window.clearTimeout(this.windowResizeTimeout);
-  window.setTimeout(this.fitImage.bind(this), 200);
+  this.windowResizeTimeout = window.setTimeout(this.fitImage.bind(this), 200);
 };
 
 Application.prototype.clearElementAttributes = function(elt) {
@@ -68,7 +71,10 @@ Application.prototype.loadImage = function(event) {
       window.appImage.onload = function() {
         window.appImage.onload = undefined;        
         window.appCanvas.width = window.appImage.width;
-        window.appCanvas.height = window.appImage.height;        
+        window.appCanvas.height = window.appImage.height;
+        window.addDataOut.textContent = '';
+        window.appAngle.value = 0;
+        this.currentAnalyticalData = null;
         this.context = window.appCanvas.getContext('2d');        
         this.context.drawImage(window.appImage, 0, 0);
         this.fitImage();
@@ -132,38 +138,16 @@ Application.prototype.updateCenter = function(event) {
 
 Application.prototype.updateAxis = function(event) {
   var axisData = event.data.axis;
-  var symmetryAxis = event.data.symmetryAxis;
-  for (var i = 0; i < 360; i++) {
-    var axis = axisData[i];
-    var id = 'appBorderPoint' + axis.azimuth;
-    if (!window[id]) {
-      var bp = document.createElement('span');
-      bp.classList.add('point');
-      if (axis.azimuth === symmetryAxis) {
-        bp.classList.add('symmetry');
-      }
-      bp.setAttribute('id', id);
-      window.appGraphDataLayer.appendChild(bp);
-    }
-    window[id].dataset.x = axis.border.x;
-    window[id].dataset.y = axis.border.y;
-    window[id].dataset.azimuth = axis.azimuth;
-    window[id].dataset.length = axis.length;
-  }
-  window.appImage.dataset.symmetryAxis = symmetryAxis;
-  var exportData = '';
-  for (var i = symmetryAxis; i < 360; i++) {
-    var axis = axisData[i];
-    exportData += axis.length.toLocaleString();
-    exportData += '\t';
-  }
-  for (var i = 0; i < symmetryAxis; i++) {
-    var axis = axisData[i];
-    exportData += axis.length.toLocaleString();
-    exportData += '\t';
-  }
-  window.addDataOut.textContent = exportData;
-  window.addDataOut.select();
+  this.currentAnalyticalData = new AnalyticalData();
+  this.currentAnalyticalData.setAxisArray(axisData);
+  this.updateDataLayer();
+  this.fitImage();
+};
+
+Application.prototype.updateSymmetryAxis = function(event) {
+  window.appAngle.value = 0;
+  this.currentAnalyticalData.setSymmetryAxis(event.data.symmetryAxis);
+  this.updateDataLayer();
   this.fitImage();
 };
 
@@ -196,6 +180,33 @@ Application.prototype.showKanny = function(event) {
   }
 };
 
+Application.prototype.updateDataLayer = function() {
+  if (this.currentAnalyticalData !== null) {
+    for (var azimuth = 0; azimuth < 360; azimuth++) {
+      var axis = this.currentAnalyticalData.getAxis(azimuth);
+      var id = 'appBorderPoint' + azimuth;
+      if (!window[id]) {
+        var bp = document.createElement('span');
+        bp.classList.add('point');
+        bp.setAttribute('id', id);
+        window.appGraphDataLayer.appendChild(bp);
+      }
+      window[id].dataset.x = axis.border.x;
+      window[id].dataset.y = axis.border.y;
+      window[id].dataset.azimuth = axis.azimuth;
+      window[id].dataset.length = axis.length;
+      window[id].classList.remove('symmetry')
+    }
+    var symmetryAxis = this.currentAnalyticalData.getSymmetryAxis();
+    if (symmetryAxis !== null) {
+      window.appGraphDataLayer.children[symmetryAxis + 1].classList.add('symmetry'); // first children is center point
+      window.appImage.dataset.symmetryAxis = symmetryAxis;        
+      window.addDataOut.textContent = this.currentAnalyticalData.exportToTSV();
+      window.clearTimeout(this.outdataSelectTimeout);
+      this.outdataSelectTimeout = window.setTimeout(window.addDataOut.select.bind(window.addDataOut), 500);
+    }
+  }
+};
 
 Application.prototype.fitImage = function() {
 
@@ -261,5 +272,13 @@ Application.prototype.analyze = function(event) {
   if (this.context) {
     var imageData = this.context.createImageData(this.context.canvas.width, this.context.canvas.height);
     this.processing.postMessage({ 'action': 'analyze', 'imageData': imageData });
+  }
+};
+
+Application.prototype.rotate = function(event) {
+  if (event.type==='input' && this.currentAnalyticalData !== null) {
+    this.currentAnalyticalData.adjustSymmetryAxis(parseInt(event.target.value));
+    this.updateDataLayer();
+    this.fitImage();
   }
 };
