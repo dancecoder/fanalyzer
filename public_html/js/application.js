@@ -1,4 +1,4 @@
-/* global URL */
+/* global URL, fetch */
 
 function Application() {
   this.context = null;  
@@ -57,8 +57,45 @@ Application.prototype.clearElementAttributes = function(elt) {
   elt.setAttribute('id', id);
 };
 
+Application.prototype.setImageBlob = function(blob) {
+  window.appImage.onload = function() {
+    window.appImage.onload = undefined;        
+    window.appCanvas.width = window.appImage.width;
+    window.appCanvas.height = window.appImage.height;
+    window.addDataOut.textContent = '';
+    window.appAngle.value = 0;
+    this.currentAnalyticalData = null;
+    this.context = window.appCanvas.getContext('2d');        
+    this.context.drawImage(window.appImage, 0, 0);
+    this.fitImage();
+    var imageData = this.context.getImageData(0, 0, window.appCanvas.width, window.appCanvas.height);
+    this.processing.postMessage({ 'action': 'setImageData', 'imageData': imageData });        
+  }.bind(this);
+  var url = window.appImage.getAttribute('src');
+  this.clearElementAttributes(window.appImage);      
+  URL.revokeObjectURL(url);
+  url = URL.createObjectURL(blob);
+  window.appImage.setAttribute('src', url);
+  this.clearElementAttributes(window.appGraphDataLayer);
+  while (window.appGraphDataLayer.firstChild) {
+    window.appGraphDataLayer.removeChild(window.appGraphDataLayer.firstChild);
+  }
+};
+
 Application.prototype.selectImageFile = function(event) {
   window.appFileInput.click();
+  return false;
+};
+
+Application.prototype.loadExampleImage = function(event) {
+  var that = this;
+  fetch('example.png').then(function(resp){
+    return resp.blob();
+  }).then(function(blob){
+    that.setImageBlob(blob);
+  }).catch(function(reason){
+    console.warn(reason);
+  });
   return false;
 };
 
@@ -68,28 +105,7 @@ Application.prototype.loadImage = function(event) {
     var file = files[0];
     event.target.value = '';
     if (file) {
-      window.appImage.onload = function() {
-        window.appImage.onload = undefined;        
-        window.appCanvas.width = window.appImage.width;
-        window.appCanvas.height = window.appImage.height;
-        window.addDataOut.textContent = '';
-        window.appAngle.value = 0;
-        this.currentAnalyticalData = null;
-        this.context = window.appCanvas.getContext('2d');        
-        this.context.drawImage(window.appImage, 0, 0);
-        this.fitImage();
-        var imageData = this.context.getImageData(0, 0, window.appCanvas.width, window.appCanvas.height);
-        this.processing.postMessage({ 'action': 'setImageData', 'imageData': imageData });        
-      }.bind(this);
-      var url = window.appImage.getAttribute('src');
-      this.clearElementAttributes(window.appImage);      
-      URL.revokeObjectURL(url);
-      url = URL.createObjectURL(file);      
-      window.appImage.setAttribute('src', url);
-      this.clearElementAttributes(window.appGraphDataLayer);
-      while (window.appGraphDataLayer.firstChild) {
-        window.appGraphDataLayer.removeChild(window.appGraphDataLayer.firstChild);
-      }
+      this.setImageBlob(file);
     }
   }
 };
