@@ -2,7 +2,7 @@
 
 Single page WEB-application for insects form analyzing scientific research
 
-Algorithms which has been implemented here is:
+Algorithms which has been implemented here are:
 
 * Grayscale filter
 * Gaussian blur filter
@@ -10,7 +10,7 @@ Algorithms which has been implemented here is:
 * Sobel operator filter
 * Semirecursive flood
 
-Special functions is:
+Special functions are:
 * A figure center finding
 * Form description by length from center to border of a figure (in polar coordinate system)
 * Simmetry finding through covariance of axis length which descripts the figure
