@@ -1,8 +1,8 @@
 {
     "name": "FormAnalyzer",
     "version": "1.0.0",
-    "keywords": ["util", "functional", "server", "client", "browser"],
-    "author": "ddutikov",
+    "keywords": ["digital image processing", "image processing", "sobel", "flood", "blur", "grayscale", "matrix dilatation", "ecology", "vital forms"],
+    "author": "Dmitry Dutikov",
     "contributors": [],
     "dependencies": {}
 }
